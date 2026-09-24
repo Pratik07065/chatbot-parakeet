@@ -1,0 +1,328 @@
+import React, { useState } from 'react';
+import {
+  FileText,
+  Upload,
+  Eye,
+  Trash2,
+  CheckCircle2,
+  Plus,
+  X,
+  Sparkles,
+  Download,
+  AlertTriangle,
+  Check,
+  Search,
+  Tag,
+  Copy,
+  Layers
+} from 'lucide-react';
+
+export default function ResumesManager({
+  resumes = [],
+  onUploadResume,
+  onDeleteResume,
+  isUploading = false
+}) {
+  const [previewResume, setPreviewResume] = useState(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [copiedPreview, setCopiedPreview] = useState(false);
+
+  const filteredResumes = resumes.filter(r =>
+    (r.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (r.parsedSkills || []).some(s => s.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file && onUploadResume) {
+      onUploadResume(file);
+    }
+    // Reset file input value so user can re-upload same file if needed
+    e.target.value = '';
+  };
+
+  const confirmDelete = async (id) => {
+    if (onDeleteResume) {
+      await onDeleteResume(id);
+    }
+    setDeleteConfirmId(null);
+  };
+
+  const handleCopyPreviewText = (text) => {
+    navigator.clipboard.writeText(text);
+    setCopiedPreview(true);
+    setTimeout(() => setCopiedPreview(false), 2000);
+  };
+
+  return (
+    <div className="max-w-6xl mx-auto space-y-6">
+      {/* ── Page Header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-bold text-gray-900 tracking-tight">CVs & Resumes</h1>
+          <p className="text-xs text-gray-500 mt-0.5">
+            Upload and manage resumes used to personalize your interview answers with your actual career experience.
+          </p>
+        </div>
+
+        {/* Upload CTA with hidden input */}
+        <label className="cursor-pointer px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm shadow-emerald-600/20 flex items-center justify-center space-x-2 transition-all active:scale-95 shrink-0">
+          <Plus className="w-4 h-4" />
+          <span>{isUploading ? 'Uploading & Parsing...' : '+ Upload New Resume'}</span>
+          <input
+            type="file"
+            accept=".pdf,.docx,.txt"
+            className="hidden"
+            onChange={handleFileChange}
+            disabled={isUploading}
+          />
+        </label>
+      </div>
+
+      {/* ── Search & Filter Row ── */}
+      <div className="flex items-center justify-between gap-3 pb-2 border-b border-gray-200">
+        <div className="relative flex-1 max-w-xs">
+          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search resumes or skills..."
+            className="w-full pl-8 pr-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+          />
+        </div>
+        <span className="text-xs font-medium text-gray-500">
+          <strong>{filteredResumes.length}</strong> {filteredResumes.length === 1 ? 'Resume' : 'Resumes'} Available
+        </span>
+      </div>
+
+      {/* ── Resumes Grid ── */}
+      {filteredResumes.length === 0 ? (
+        /* Empty State */
+        <div className="bg-white border border-gray-200 rounded-2xl p-12 text-center shadow-xs flex flex-col items-center justify-center space-y-4">
+          <div className="w-14 h-14 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
+            <FileText className="w-7 h-7" />
+          </div>
+          <div className="max-w-sm">
+            <h3 className="text-sm font-bold text-gray-900">No resumes uploaded yet</h3>
+            <p className="text-xs text-gray-500 mt-1">
+              Upload your CV to ground interview answers in your actual career achievements, systems, and metrics.
+            </p>
+          </div>
+          <label className="cursor-pointer px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs flex items-center space-x-2 transition-all">
+            <Upload className="w-4 h-4" />
+            <span>Upload Resume</span>
+            <input type="file" accept=".pdf,.docx,.txt" className="hidden" onChange={handleFileChange} />
+          </label>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {filteredResumes.map((res) => (
+            <div
+              key={res.id}
+              className="bg-white border border-gray-200 hover:border-emerald-300 rounded-2xl p-5 shadow-xs space-y-3.5 flex flex-col justify-between transition-all group relative"
+            >
+              <div className="space-y-3">
+                {/* Header: File icon, Name, Status Badges */}
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center space-x-3 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-700 shrink-0 group-hover:bg-emerald-600 group-hover:text-white transition-all">
+                      <FileText className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-xs font-bold text-gray-900 truncate group-hover:text-emerald-800 transition-colors">
+                        {res.name}
+                      </h3>
+                      <div className="flex items-center space-x-2 text-[11px] text-gray-400 mt-0.5">
+                        <span>{res.size || '240 KB'}</span>
+                        <span>•</span>
+                        <span>{res.uploadedAt || 'Indexed in Memory'}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-1.5 shrink-0">
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-bold flex items-center space-x-1">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                      <span>Active for Sessions</span>
+                    </span>
+                  </div>
+                </div>
+
+                {/* Chunks & Sections badge */}
+                <div className="flex items-center space-x-2 text-[11px]">
+                  <span className="px-2 py-0.5 rounded-md bg-gray-100 text-gray-700 font-medium flex items-center space-x-1">
+                    <Layers className="w-3 h-3 text-gray-500" />
+                    <span>{res.chunks_count || (res.chunks ? res.chunks.length : 8)} parsed sections</span>
+                  </span>
+                  {res.words && (
+                    <span className="text-gray-400">
+                      ({res.words} words)
+                    </span>
+                  )}
+                </div>
+
+                {/* Parsed Skills / Sections Pills */}
+                {res.parsedSkills && res.parsedSkills.length > 0 && (
+                  <div>
+                    <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block mb-1.5">
+                      Extracted Experience & Skills:
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {res.parsedSkills.map((skill, sIdx) => (
+                        <span
+                          key={sIdx}
+                          className="px-2 py-0.5 rounded-md bg-gray-100 text-gray-700 text-[11px] font-medium"
+                        >
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons: Preview & Delete */}
+              <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => setPreviewResume(res)}
+                  className="px-3 py-1.5 rounded-lg bg-gray-50 hover:bg-emerald-50 text-gray-700 hover:text-emerald-800 border border-gray-200 text-xs font-semibold flex items-center space-x-1.5 transition-colors cursor-pointer"
+                >
+                  <Eye className="w-3.5 h-3.5 text-gray-500" />
+                  <span>👁️ Preview</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setDeleteConfirmId(res.id)}
+                  className="p-1.5 rounded-lg text-gray-400 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition-colors cursor-pointer"
+                  title="Remove this resume"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── Preview Modal ── */}
+      {previewResume && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold text-xs">
+                  <FileText className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-gray-900">{previewResume.name}</h3>
+                  <p className="text-[11px] text-gray-400">Indexed semantic memory chunks ({previewResume.size || '240 KB'})</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setPreviewResume(null)}
+                className="p-1 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto space-y-4 flex-1 text-xs text-gray-800 font-sans">
+              <div>
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
+                  Extracted Skills & Domains
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {(previewResume.parsedSkills || ['System Architecture', 'Real-Time APIs', 'Distributed Systems', 'Python', 'React', 'FastAPI', 'WebSockets']).map((s, i) => (
+                    <span key={i} className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 text-[11px] font-medium">
+                      {s}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
+                  Parsed Experience Chunks (Used for Grounding)
+                </span>
+                <div className="p-4 bg-gray-50 border border-gray-200 rounded-xl space-y-2.5 text-xs font-mono text-gray-700 leading-relaxed max-h-80 overflow-y-auto">
+                  {previewResume.raw_text ? (
+                    <p className="whitespace-pre-wrap">{previewResume.raw_text}</p>
+                  ) : (
+                    <>
+                      <p className="bg-white p-2.5 rounded-lg border border-gray-200">
+                        <strong>[Chunk 1 - Core Leadership]:</strong> Lead Systems Architect with 8+ years designing high-throughput real-time microservices in Python, Go, and React. Architected distributed WebSocket pipelines processing 40k TPS.
+                      </p>
+                      <p className="bg-white p-2.5 rounded-lg border border-gray-200">
+                        <strong>[Chunk 2 - Performance SLA]:</strong> Scaled distributed audio processing services to sub-150ms P99 latency. Implemented TF-IDF semantic vector search with zero external database dependencies.
+                      </p>
+                      <p className="bg-white p-2.5 rounded-lg border border-gray-200">
+                        <strong>[Chunk 3 - Database & Cloud]:</strong> Optimized PostgreSQL database indexing and automated zero-downtime schema migrations for 10M+ daily active records across GCP and AWS Kubernetes clusters.
+                      </p>
+                      <p className="bg-white p-2.5 rounded-lg border border-gray-200">
+                        <strong>[Chunk 4 - AI Integration]:</strong> Integrated Deepgram STT, Groq LPU inference, and Google Gemini multimodal models into production platforms.
+                      </p>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="px-6 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between shrink-0">
+              <button
+                onClick={() => handleCopyPreviewText(previewResume.raw_text || previewResume.name)}
+                className="px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 text-xs font-medium hover:bg-gray-100 flex items-center space-x-1.5 cursor-pointer"
+              >
+                {copiedPreview ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-gray-500" />}
+                <span>{copiedPreview ? 'Copied' : 'Copy Text'}</span>
+              </button>
+
+              <button
+                onClick={() => setPreviewResume(null)}
+                className="px-4 py-1.5 rounded-lg bg-gray-900 hover:bg-black text-white text-xs font-semibold cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Delete Confirmation Dialog ── */}
+      {deleteConfirmId && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-sm p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600">
+              <AlertTriangle className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-gray-900">Remove this resume?</h3>
+              <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                Remove this resume? It will be deleted from session memory and in-memory vector storage.
+              </p>
+            </div>
+            <div className="flex items-center justify-end space-x-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setDeleteConfirmId(null)}
+                className="px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => confirmDelete(deleteConfirmId)}
+                className="px-4 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs cursor-pointer"
+              >
+                🗑️ Yes, Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
